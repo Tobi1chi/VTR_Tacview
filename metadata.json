@@ -1,0 +1,5 @@
+{
+  "name": "ACMI Replay Engine",
+  "description": "A browser-based 3D replay engine for Tacview 2.x ACMI files, built with Angular and Three.js. This application allows users to upload .acmi files and visualize the recorded flight data in a 3D environment with playback controls.",
+  "requestFramePermissions": []
+}

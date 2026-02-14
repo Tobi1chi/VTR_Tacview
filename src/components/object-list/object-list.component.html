@@ -1,0 +1,22 @@
+
+<div class="bg-black bg-opacity-60 p-3 rounded-lg max-w-xs w-full max-h-[60vh] pointer-events-auto flex flex-col">
+  <h3 class="text-md font-bold text-gray-200 border-b border-gray-600 pb-2 mb-2">Detected Objects</h3>
+  <div class="overflow-y-auto pr-2">
+    @for (obj of objectList(); track obj.id) {
+      <div 
+        class="mb-2 p-2 bg-gray-800 rounded hover:bg-gray-700 transition-colors cursor-pointer"
+        (dblclick)="onObjectDoubleClick(obj.id)">
+        <div class="flex justify-between items-baseline">
+          <span class="font-semibold text-sm text-cyan-400 truncate" [title]="obj.name">{{ obj.name }}</span>
+          <span class="text-xs text-gray-400 font-mono">{{ obj.id }}</span>
+        </div>
+        <div class="flex justify-between items-baseline text-xs text-gray-500 mt-1">
+          <span>{{ obj.type }}</span>
+          <span>{{ obj.statesCount }} states</span>
+        </div>
+      </div>
+    } @empty {
+      <p class="text-gray-500 text-sm">No objects found in file.</p>
+    }
+  </div>
+</div>

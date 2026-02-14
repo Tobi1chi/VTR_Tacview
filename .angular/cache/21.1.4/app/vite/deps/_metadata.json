@@ -1,0 +1,70 @@
+{
+  "hash": "a24c97f7",
+  "configHash": "35239d12",
+  "lockfileHash": "5748b324",
+  "browserHash": "489793aa",
+  "optimized": {
+    "@angular/common": {
+      "src": "../../../../../../node_modules/@angular/common/fesm2022/common.mjs",
+      "file": "@angular_common.js",
+      "fileHash": "065c42ad",
+      "needsInterop": false
+    },
+    "@angular/common/http": {
+      "src": "../../../../../../node_modules/@angular/common/fesm2022/http.mjs",
+      "file": "@angular_common_http.js",
+      "fileHash": "ab1a3cda",
+      "needsInterop": false
+    },
+    "@angular/core": {
+      "src": "../../../../../../node_modules/@angular/core/fesm2022/core.mjs",
+      "file": "@angular_core.js",
+      "fileHash": "e6b02fab",
+      "needsInterop": false
+    },
+    "@angular/platform-browser": {
+      "src": "../../../../../../node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
+      "file": "@angular_platform-browser.js",
+      "fileHash": "1cf9bd24",
+      "needsInterop": false
+    },
+    "three": {
+      "src": "../../../../../../node_modules/three/build/three.module.js",
+      "file": "three.js",
+      "fileHash": "51089634",
+      "needsInterop": false
+    },
+    "three/addons/controls/OrbitControls.js": {
+      "src": "../../../../../../node_modules/three/examples/jsm/controls/OrbitControls.js",
+      "file": "three_addons_controls_OrbitControls__js.js",
+      "fileHash": "854f4725",
+      "needsInterop": false
+    },
+    "three/addons/loaders/OBJLoader.js": {
+      "src": "../../../../../../node_modules/three/examples/jsm/loaders/OBJLoader.js",
+      "file": "three_addons_loaders_OBJLoader__js.js",
+      "fileHash": "4090ab6a",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-SNBM3NPU": {
+      "file": "chunk-SNBM3NPU.js"
+    },
+    "chunk-BNJV3WSW": {
+      "file": "chunk-BNJV3WSW.js"
+    },
+    "chunk-KHS5BEOD": {
+      "file": "chunk-KHS5BEOD.js"
+    },
+    "chunk-SUE7V654": {
+      "file": "chunk-SUE7V654.js"
+    },
+    "chunk-HGTBUJUQ": {
+      "file": "chunk-HGTBUJUQ.js"
+    },
+    "chunk-GOMI4DH3": {
+      "file": "chunk-GOMI4DH3.js"
+    }
+  }
+}
