@@ -19,7 +19,11 @@
             "browser": "index.tsx",
             "tsConfig": "tsconfig.json",
             "assets": [
-              "public"
+              {
+                "glob": "**/*",
+                "input": "public",
+                "output": "."
+              }
             ]
           },
           "configurations": {
