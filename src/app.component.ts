@@ -33,6 +33,13 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   fileName = signal<string | null>(null);
   
   selectedAircraftData = signal<AircraftDisplayData | null>(null);
+  mapSize = signal<number>(1);
+  selectedMapPresetId = signal<string>('');
+  showMapConfigModal = signal<boolean>(false);
+  pendingMapFile = signal<File | null>(null);
+  mapEdgeMeters = signal<number>(1000);
+
+  readonly mapPresets: Array<{ id: string; name: string; url: string; width: number; height: number; unit: 'degrees' | 'meters'; referenceLat?: number; }> = [];
 
   private animationFrameId: number | null = null;
   private lastTimestamp = 0;
@@ -158,6 +165,85 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
   public onObjectSelected(id: string): void {
     this.threeRenderer.setFollowTarget(id);
+  }
+
+  public onMapFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    this.pendingMapFile.set(file);
+    this.mapEdgeMeters.set(1000);
+    this.showMapConfigModal.set(true);
+    input.value = '';
+  }
+
+  public onMapPresetChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.selectedMapPresetId.set(select.value);
+  }
+
+  public async applyCustomMap(file?: File): Promise<void> {
+    if (!file) return;
+    const size = this.getMapSizeInMeters();
+    const bitmap = await createImageBitmap(file);
+    this.threeRenderer.setMapFromBitmap(bitmap, size.widthMeters, size.heightMeters);
+  }
+
+  public async applyCustomMapWithMeters(file: File, edgeMeters: number): Promise<void> {
+    const bitmap = await createImageBitmap(file);
+    const edge = Math.abs(edgeMeters);
+    this.threeRenderer.setMapFromBitmap(bitmap, edge, edge);
+  }
+
+  public applySelectedPreset(): void {
+    const id = this.selectedMapPresetId();
+    const preset = this.mapPresets.find(p => p.id === id);
+    if (!preset) return;
+    const size = this.getMapSizeInMeters(preset.width, preset.height, preset.unit, preset.referenceLat);
+    this.threeRenderer.setMapFromUrl(preset.url, size.widthMeters, size.heightMeters);
+  }
+
+  public clearMap(): void {
+    this.threeRenderer.clearMap();
+  }
+
+  public confirmMapConfig(): void {
+    const file = this.pendingMapFile();
+    const edge = this.mapEdgeMeters();
+    if (!file || !edge || edge <= 0) {
+      this.cancelMapConfig();
+      return;
+    }
+    this.applyCustomMapWithMeters(file, edge).catch(() => {});
+    this.pendingMapFile.set(null);
+    this.showMapConfigModal.set(false);
+  }
+
+  public cancelMapConfig(): void {
+    this.pendingMapFile.set(null);
+    this.showMapConfigModal.set(false);
+  }
+
+  private getMapSizeInMeters(
+    width?: number,
+    height?: number,
+    unit?: 'degrees' | 'meters',
+    referenceLatOverride?: number,
+  ): { widthMeters: number; heightMeters: number } {
+    const widthValue = width ?? this.mapSize();
+    const heightValue = height ?? this.mapSize();
+    const unitValue = unit ?? 'meters';
+    if (unitValue === 'meters') {
+      return { widthMeters: Math.abs(widthValue), heightMeters: Math.abs(heightValue) };
+    }
+
+    const metersPerDegree = 111319.9;
+    const referenceLat = referenceLatOverride ?? this.simulationService.acmiData()?.referenceLatitude ?? 0;
+    const metersPerDegreeLon = Math.cos(referenceLat * Math.PI / 180) * metersPerDegree;
+    return {
+      widthMeters: Math.abs(widthValue) * metersPerDegreeLon,
+      heightMeters: Math.abs(heightValue) * metersPerDegree,
+    };
   }
   
   private logParserDiagnostics(acmiData: AcmiData): void {

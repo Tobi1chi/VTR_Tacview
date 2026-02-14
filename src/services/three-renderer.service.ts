@@ -47,6 +47,9 @@ export class ThreeRendererService {
     ['vtolvr_EscortCruiser.obj', 80],
     ['Watercraft.CVN-74.obj', 120],
   ]);
+  private mapMesh: THREE.Mesh | null = null;
+  private mapTexture: THREE.Texture | null = null;
+  private mapMaterial: THREE.MeshStandardMaterial | null = null;
 
   // Camera follow state
   public readonly followTargetId = signal<string | null>(null);
@@ -55,7 +58,7 @@ export class ThreeRendererService {
 
   // Keyboard controls state
   private keyStates = new Map<string, boolean>();
-  private moveSpeed = 500; // units per second
+  private moveSpeed = 1200; // units per second
   private tempMoveVector = new THREE.Vector3();
   private tempCamVector = new THREE.Vector3();
 
@@ -93,9 +96,11 @@ export class ThreeRendererService {
     this.controls.dampingFactor = 0.1;
     this.controls.screenSpacePanning = false;
 
-    // Automatically disable follow mode when user interacts with camera controls
-    this.controls.addEventListener('start', () => {
-      this.followTargetId.set(null);
+    // Disable follow mode only when user pans (Right Click)
+    canvas.addEventListener('pointerdown', (event) => {
+      if (event.button === 2) { // Right click = Pan
+        this.followTargetId.set(null);
+      }
     });
 
     // Keyboard Listeners
@@ -196,12 +201,23 @@ export class ThreeRendererService {
       return;
     }
 
-    // Calculate desired camera position based on static offset
-    const desiredPosition = targetMesh.position.clone().add(this.followOffset);
+    // Move both controls.target and camera.position by the same delta
+    // to maintain the user's viewing angle/distance while following the object.
+    const currentTarget = this.controls.target;
+    const targetPos = targetMesh.position;
 
-    // Smoothly interpolate camera position and controls target
-    this.camera.position.lerp(desiredPosition, this.followSmoothingFactor);
-    this.controls.target.lerp(targetMesh.position, this.followSmoothingFactor);
+    // Smoothly interpolate target position
+    const lerpAlpha = this.followSmoothingFactor;
+    const newTargetX = THREE.MathUtils.lerp(currentTarget.x, targetPos.x, lerpAlpha);
+    const newTargetY = THREE.MathUtils.lerp(currentTarget.y, targetPos.y, lerpAlpha);
+    const newTargetZ = THREE.MathUtils.lerp(currentTarget.z, targetPos.z, lerpAlpha);
+
+    const deltaX = newTargetX - currentTarget.x;
+    const deltaY = newTargetY - currentTarget.y;
+    const deltaZ = newTargetZ - currentTarget.z;
+
+    this.controls.target.set(newTargetX, newTargetY, newTargetZ);
+    this.camera.position.add(new THREE.Vector3(deltaX, deltaY, deltaZ));
   }
 
   public focusOnObject(state: InterpolatedState): void {
@@ -221,6 +237,38 @@ export class ThreeRendererService {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     this.renderer.dispose();
+  }
+
+  public setMapFromUrl(url: string, widthMeters: number, heightMeters: number): void {
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      url,
+      texture => this.applyMapTexture(texture, widthMeters, heightMeters),
+      undefined,
+      err => console.error('[ThreeRenderer] Failed to load map texture:', err),
+    );
+  }
+
+  public setMapFromBitmap(bitmap: ImageBitmap, widthMeters: number, heightMeters: number): void {
+    const texture = new THREE.Texture(bitmap);
+    texture.needsUpdate = true;
+    this.applyMapTexture(texture, widthMeters, heightMeters);
+  }
+
+  public clearMap(): void {
+    if (this.mapMesh) {
+      this.scene.remove(this.mapMesh);
+      this.mapMesh.geometry.dispose();
+      this.mapMesh = null;
+    }
+    if (this.mapMaterial) {
+      this.mapMaterial.dispose();
+      this.mapMaterial = null;
+    }
+    if (this.mapTexture) {
+      this.mapTexture.dispose();
+      this.mapTexture = null;
+    }
   }
 
   private onWindowResize(): void {
@@ -510,6 +558,29 @@ export class ThreeRendererService {
     const shapeName = this._resolveShapeName(object);
     if (!shapeName) return 0;
     return this.extraGroundOffsets.get(shapeName) ?? 0;
+  }
+
+  private applyMapTexture(texture: THREE.Texture, widthMeters: number, heightMeters: number): void {
+    this.clearMap();
+
+    this.mapTexture = texture;
+    this.mapTexture.colorSpace = THREE.SRGBColorSpace;
+    this.mapTexture.wrapS = THREE.ClampToEdgeWrapping;
+    this.mapTexture.wrapT = THREE.ClampToEdgeWrapping;
+
+    this.mapMaterial = new THREE.MeshStandardMaterial({
+      map: this.mapTexture,
+      color: 0xffffff,
+      metalness: 0,
+      roughness: 1,
+    });
+
+    const geometry = new THREE.PlaneGeometry(widthMeters, heightMeters);
+    const mesh = new THREE.Mesh(geometry, this.mapMaterial);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.set(widthMeters / 2, this.groundPlaneY + 0.05, -heightMeters / 2);
+    this.scene.add(mesh);
+    this.mapMesh = mesh;
   }
 
   private _getShapeCacheKey(fileName: string): string {

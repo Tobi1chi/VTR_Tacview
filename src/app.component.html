@@ -3,11 +3,43 @@
   <!-- Header -->
   <header class="bg-gray-900 text-white p-2 shadow-md flex justify-between items-center z-20">
     <h1 class="text-lg font-bold">Angular ACMI Replay Engine</h1>
-    <div class="relative">
-      <label for="acmi-upload" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded cursor-pointer transition-colors">
-        Load ACMI File
-      </label>
-      <input id="acmi-upload" type="file" class="hidden" (change)="onFileChange($event)" accept=".acmi">
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <label for="acmi-upload" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded cursor-pointer transition-colors">
+          Load ACMI File
+        </label>
+        <input id="acmi-upload" type="file" class="hidden" (change)="onFileChange($event)" accept=".acmi">
+      </div>
+      <div class="flex items-center gap-2">
+        <label for="map-upload" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-1 px-3 rounded cursor-pointer transition-colors">
+          Load Map PNG
+        </label>
+        <input id="map-upload" type="file" class="hidden" (change)="onMapFileChange($event)" accept=".png">
+      </div>
+      <div class="flex items-center gap-2">
+        <select
+          class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs"
+          [value]="selectedMapPresetId()"
+          (change)="onMapPresetChange($event)">
+          @if (mapPresets.length === 0) {
+            <option value="">No presets</option>
+          } @else {
+            @for (preset of mapPresets; track preset.id) {
+              <option [value]="preset.id">{{ preset.name }}</option>
+            }
+          }
+        </select>
+        <button
+          class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-1 px-3 rounded transition-colors"
+          (click)="applySelectedPreset()">
+          Apply Preset
+        </button>
+        <button
+          class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-1 px-3 rounded transition-colors"
+          (click)="clearMap()">
+          Clear Map
+        </button>
+      </div>
     </div>
   </header>
 
@@ -64,6 +96,39 @@
       }
     </div>
   </main>
+
+  @if (showMapConfigModal()) {
+    <div class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 pointer-events-auto">
+      <div class="bg-gray-900 text-white rounded shadow-lg p-4 w-80">
+        <h2 class="text-base font-semibold mb-3">Map Size</h2>
+        <div class="text-sm text-gray-300 mb-2">
+          Set square map edge length in meters.
+        </div>
+        <div class="flex items-center gap-2 mb-4">
+          <input
+            type="number"
+            min="1"
+            step="1"
+            class="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm"
+            [value]="mapEdgeMeters()"
+            (input)="mapEdgeMeters.set($any($event.target).valueAsNumber)">
+          <span class="text-xs text-gray-400">m</span>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button
+            class="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-1 px-3 rounded"
+            (click)="cancelMapConfig()">
+            Cancel
+          </button>
+          <button
+            class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-1 px-3 rounded"
+            (click)="confirmMapConfig()">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- Footer / Playback Controls -->
   @if (simulationService.isDataLoaded()) {
