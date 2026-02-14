@@ -1,0 +1,10 @@
+services:
+  acmi-replay-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: acmi-replay-engine:latest
+    container_name: acmi-replay-engine
+    ports:
+      - "8085:80"
+    restart: unless-stopped
